@@ -1,28 +1,27 @@
-import joblib
-import pandas as pd
-import sys
+"""CLI prediction helper retained for local/offline use.
+Production Vercel requests use api/index.py directly and do not spawn Python processes.
+"""
 import os
+import sys
+from pathlib import Path
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(current_dir, "model.pkl")
+import joblib
+import numpy as np
 
-model = joblib.load(model_path)
+MODEL_PATH = Path(__file__).resolve().parent / "model.pkl"
 
-data = pd.DataFrame([{
-    "Attendance": float(sys.argv[1]),
-    "StudyHours": float(sys.argv[2]),
-    "PreviousMarks": float(sys.argv[3]),
-    "InternalMarks": float(sys.argv[4]),
-    "Assignments": float(sys.argv[5])
-}])
 
-prediction = model.predict(data)
+def predict(values):
+    model = joblib.load(MODEL_PATH)
+    data = np.array([values], dtype=float)
+    prediction = int(model.predict(data)[0])
+    confidence = float(np.max(model.predict_proba(data)[0])) * 100
+    return ("Pass" if prediction == 1 else "Fail", round(confidence, 2))
 
-confidence = model.predict_proba(data)
 
-percentage = round(max(confidence[0]) * 100, 2)
-
-if prediction[0] == 1:
-    print(f"Pass,{percentage}")
-else:
-    print(f"Fail,{percentage}")
+if __name__ == "__main__":
+    if len(sys.argv) != 6:
+        raise SystemExit("Usage: python predict.py attendance studyHours previousMarks internalMarks assignments")
+    values = [float(value) for value in sys.argv[1:]]
+    result, confidence = predict(values)
+    print(f"{result},{confidence}")
