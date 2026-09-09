@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to the AI Student Performance Predictor.">
+    <title>Login · AI Predictor</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-card">
+        <a class="back-link" href="/"><i class="fa-solid fa-arrow-left"></i> Back to home</a>
+        <i class="fa-solid fa-user-graduate login-icon"></i>
+        <h2>Welcome Back</h2><p class="card-subtitle">Sign in to continue to your dashboard.</p>
+        <form id="loginForm" novalidate>
+            <label for="email">Email</label><input type="email" id="email" placeholder="Enter email" autocomplete="email" required>
+            <label for="password">Password</label><input type="password" id="password" placeholder="Enter password" autocomplete="current-password" required>
+            <button type="submit">Login</button>
+            <p id="loginMessage" class="form-message" hidden></p>
+        </form>
+        <p class="switch-auth">Don't have an account? <a href="/register.html">Create one</a></p>
+    </div>
+</div>
+<script src="/script.js"></script>
+</body>
+</html>
