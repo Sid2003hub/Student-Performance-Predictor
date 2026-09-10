@@ -23,9 +23,11 @@ warnings.filterwarnings(
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
+
 MODEL_PATH = BASE_DIR / "ml_model" / "model.pkl"
 
 app = Flask(__name__)
+
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024
 
 
@@ -46,6 +48,7 @@ def get_model():
     global _model
 
     if _model is None:
+
         if not MODEL_PATH.exists():
             raise RuntimeError(
                 f"ML model not found at {MODEL_PATH}"
@@ -85,7 +88,6 @@ def get_db():
             "MONGO_URI must include a database name"
         )
 
-    # Create indexes only when database is first accessed.
     _db.users.create_index(
         [("email", ASCENDING)],
         unique=True
@@ -114,6 +116,7 @@ def get_secret():
 
 
 def make_token(user_id, email):
+
     now = datetime.now(timezone.utc)
 
     payload = {
@@ -145,6 +148,7 @@ def require_auth(fn):
         )
 
         if not header.startswith("Bearer "):
+
             return jsonify({
                 "error": "Authentication required"
             }), 401
@@ -152,6 +156,7 @@ def require_auth(fn):
         token = header[7:].strip()
 
         try:
+
             payload = jwt.decode(
                 token,
                 get_secret(),
@@ -163,13 +168,15 @@ def require_auth(fn):
         except jwt.ExpiredSignatureError:
 
             return jsonify({
-                "error": "Session expired. Please login again."
+                "error":
+                    "Session expired. Please login again."
             }), 401
 
         except jwt.InvalidTokenError:
 
             return jsonify({
-                "error": "Invalid authentication token"
+                "error":
+                    "Invalid authentication token"
             }), 401
 
         return fn(*args, **kwargs)
@@ -201,10 +208,10 @@ def validate_prediction_input(data):
     if not isinstance(data, dict):
 
         return None, {
-            "body": "Request body must be a JSON object"
+            "body":
+                "Request body must be a JSON object"
         }
 
-    # Student name
     name = str(
         data.get("name", "")
     ).strip()
@@ -217,14 +224,15 @@ def validate_prediction_input(data):
         )
 
     else:
+
         cleaned["name"] = name
 
-    # Numeric fields
     for field, minimum, maximum in fields:
 
         value = data.get(field)
 
         try:
+
             number = float(value)
 
         except (TypeError, ValueError):
@@ -242,11 +250,13 @@ def validate_prediction_input(data):
             errors[field] = (
                 f"Must be between {minimum} and {maximum}"
             )
+
             continue
 
         cleaned[field] = number
 
     if errors:
+
         return None, errors
 
     return cleaned, {}
@@ -275,7 +285,7 @@ def add_security_headers(response):
 
 
 # ============================================================
-# FRONTEND FILE ROUTES
+# FRONTEND ROUTES
 # ============================================================
 
 @app.route("/")
@@ -362,7 +372,9 @@ def health():
     try:
 
         db = get_db()
+
         db.command("ping")
+
         db_status = "connected"
 
     except Exception:
@@ -371,10 +383,18 @@ def health():
             db_status = "unavailable"
 
     return jsonify({
+
         "status": "ok",
-        "service": "AI Student Performance Predictor",
-        "modelLoaded": MODEL_PATH.exists(),
-        "database": db_status
+
+        "service":
+            "AI Student Performance Predictor",
+
+        "modelLoaded":
+            MODEL_PATH.exists(),
+
+        "database":
+            db_status
+
     })
 
 
@@ -404,31 +424,26 @@ def register():
         data.get("name", "")
     ).strip()
 
-    # Validate name
     if not name or len(name) > 100:
 
         return jsonify({
-            "error": (
-                "Name is required and must be "
-                "at most 100 characters"
-            )
+            "error":
+                "Name is required and must be at most "
+                "100 characters"
         }), 400
 
-    # Validate email
     if "@" not in email or len(email) > 254:
 
         return jsonify({
-            "error": "Enter a valid email address"
+            "error":
+                "Enter a valid email address"
         }), 400
 
-    # Validate password
     if len(password) < 8 or len(password) > 128:
 
         return jsonify({
-            "error": (
-                "Password must be between "
-                "8 and 128 characters"
-            )
+            "error":
+                "Password must be between 8 and 128 characters"
         }), 400
 
     try:
@@ -443,23 +458,24 @@ def register():
         if existing:
 
             return jsonify({
-                "error": (
-                    "An account with this email "
-                    "already exists"
-                )
+                "error":
+                    "An account with this email already exists"
             }), 409
 
         result = db.users.insert_one({
 
-            "name": name,
+            "name":
+                name,
 
-            "email": email,
+            "email":
+                email,
 
             "passwordHash":
                 generate_password_hash(password),
 
             "createdAt":
                 datetime.now(timezone.utc)
+
         })
 
         token = make_token(
@@ -476,8 +492,11 @@ def register():
                 token,
 
             "user": {
-                "name": name,
-                "email": email
+                "name":
+                    name,
+
+                "email":
+                    email
             }
 
         }), 201
@@ -578,6 +597,7 @@ def login():
                 token,
 
             "user": {
+
                 "name":
                     user.get(
                         "name",
@@ -618,25 +638,30 @@ def me():
         db = get_db()
 
         user = db.users.find_one(
+
             {
                 "email":
                     request.user["email"]
             },
+
             {
                 "name": 1,
                 "email": 1
             }
+
         )
 
         if not user:
 
             return jsonify({
-                "error": "User not found"
+                "error":
+                    "User not found"
             }), 404
 
         return jsonify({
 
             "user": {
+
                 "name":
                     user.get(
                         "name",
@@ -676,8 +701,8 @@ def predict():
         silent=True
     )
 
-    cleaned, errors = validate_prediction_input(
-        data
+    cleaned, errors = (
+        validate_prediction_input(data)
     )
 
     if errors:
@@ -697,7 +722,9 @@ def predict():
         model = get_model()
 
         features = pd.DataFrame([
+
             {
+
                 "Attendance":
                     cleaned["attendance"],
 
@@ -711,8 +738,10 @@ def predict():
                     cleaned["internalMarks"],
 
                 "Assignments":
-                    cleaned["assignments"],
+                    cleaned["assignments"]
+
             }
+
         ])
 
         prediction_value = int(
@@ -751,6 +780,7 @@ def predict():
 
             "createdAt":
                 datetime.now(timezone.utc)
+
         }
 
         db.predictions.insert_one(doc)
@@ -762,6 +792,7 @@ def predict():
 
             "confidence":
                 confidence
+
         })
 
     except Exception as exc:
@@ -805,19 +836,23 @@ def history():
         records = list(
 
             db.predictions.find(
+
                 {
                     "userId":
                         request.user["sub"]
                 },
+
                 {
                     "_id": 0
                 }
+
             )
             .sort(
                 "createdAt",
                 -1
             )
             .limit(20)
+
         )
 
         for record in records:
@@ -896,16 +931,21 @@ def internal_error(_error):
 if __name__ == "__main__":
 
     app.run(
+
         host="0.0.0.0",
+
         port=int(
             os.getenv(
                 "PORT",
                 "5000"
             )
         ),
+
         debug=(
             os.getenv(
-                "APP_DEBUG"
-            ) == "true"
+                "APP_DEBUG",
+                "false"
+            ).lower() == "true"
         )
+
     )
